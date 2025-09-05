@@ -1,13 +1,14 @@
 {
   "name": "Planes Juntos",
-  "short_name": "Viaje Denis",
-  "description": "Formulario bonito para planificar viajes.",
+  "short_name": "Planes Juntos",
+  "description": "Formulario bonito que envía las respuestas al correo de Ro.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f0f12",
-  "theme_color": "#7a5cff",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
+
