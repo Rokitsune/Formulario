@@ -21,7 +21,7 @@
   .step{display:none;gap:14px}
   .step.active{display:block}
   .grid{display:grid;gap:12px}
-  @media(min-width:720px){ .grid.two{grid-template-columns:1fr 1fr} .grid.three{grid-template-columns:repeat(3,1fr)} }
+  @media(min-width:720px){ .grid.two{grid-template-columns:1fr 1fr} }
   label{font-weight:600}
   input[type=text], input[type=date], input[type=number], input[type=email], textarea, select{
     width:100%; padding:12px 14px; border-radius:10px; border:1px solid #2b2b33; background:#121217; color:var(--ink);
@@ -215,7 +215,9 @@
   const range = document.getElementById('presupuesto');
   const out = document.getElementById('presOut');
   const STORAGE_KEY = 'form_denis_viaje_v1';
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyosUEVcTjEj7PiEBxqQte5Zr3D8xAyI9MLuggA_5D-PtD2_qlfZY8EqCCEBC4PV2kB9g/exec';
+
+  // Email endpoint (FormSubmit)
+  const EMAIL_ENDPOINT = 'https://formsubmit.co/ajax/rociovelascoig@gmail.com';
 
   let step = 1;
 
@@ -305,31 +307,45 @@
     reviewEl.innerHTML = entries.map(([k,v]) => `<li><strong>${k}:</strong> <span class="muted">${v}</span></li>`).join('');
   };
 
-  // Eventos UI
+  // Navegación
   next.addEventListener('click', () => { if (!validateStep()) return; showStep(step+1); });
   prev.addEventListener('click', () => showStep(step-1));
   save.addEventListener('click', autosave);
   form.addEventListener('input', e => { if(e.target===range) out.textContent = `${range.value} €`; });
   form.addEventListener('change', e => { if(e.target===range) out.textContent = `${range.value} €`; autosave(); });
 
-  // Envío a Google Apps Script (urlencoded → sin preflight)
+  // Envío a tu email con FormSubmit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = serialize();
     status('Enviando…');
-    try {
-      const body = new URLSearchParams({ payload: JSON.stringify(data) });
-      const res = await fetch(WEBHOOK_URL, { method:'POST', body });
-      const text = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-      let msg = '¡Enviado! Gracias 🫶';
-      try { const j = JSON.parse(text); if (j.ok) msg = '¡Guardado en la hoja! ✅'; } catch {}
+
+    // Personalizamos asunto y dejamos que FormSubmit genere tabla
+    const payload = {
+      _subject: `Nueva respuesta: ${data.nombre || 'Sin nombre'} — Viaje Denis`,
+      _template: "table",
+      _replyto: data.email || "",
+      ...data
+    };
+
+    try{
+      const res = await fetch(EMAIL_ENDPOINT, {
+        method:'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Accept':'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const resp = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(resp?.message || `HTTP ${res.status}`);
+
       localStorage.removeItem(STORAGE_KEY);
-      status(msg, 'ok');
+      status('¡Enviado! Revisa tu correo 📬', 'ok');
       form.reset(); showStep(1); window.scrollTo({top:0, behavior:'smooth'});
-    } catch (err) {
-      console.error('Fallo envío', err);
-      status('No se pudo enviar. Guarda y reintenta.', 'err');
+    }catch(err){
+      console.error(err);
+      status('No se pudo enviar. Intenta de nuevo más tarde.', 'err');
     }
   });
 
@@ -341,4 +357,3 @@
 </script>
 </body>
 </html>
-
