@@ -326,35 +326,39 @@
   form.addEventListener('change', e => { if(e.target===range) out.textContent = `${range.value} €`; autosave(); });
 
   form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = serialize();
-  status('Enviando…');
-
-  try{
-    const res = await fetch(WEBHOOK_URL, {
-      method:'POST',
-      // 👉 "Simple request" (sin preflight): así Apps Script lo acepta sin CORS
-      headers:{ 'Content-Type':'text/plain' },
-      body: JSON.stringify(data)
-    });
-
-    // Si Apps Script devuelve JSON, lo leemos (no siempre es necesario)
-    let msg = '¡Enviado! Gracias 🫶';
+    e.preventDefault();
+    const data = serialize();
+    status('Enviando…');
+  
     try {
-      const j = await res.json();
-      if (j && j.ok) msg = '¡Guardado en la hoja! ✅';
-    } catch(e){ /* si no hay JSON no pasa nada */ }
+      // Enviamos como application/x-www-form-urlencoded (simple request)
+      const body = new URLSearchParams({ payload: JSON.stringify(data) });
+  
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        body // no pongas headers manuales; el navegador ya fija el correcto
+      });
+  
+      const text = await res.text(); // por si tu script devuelve JSON o texto
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
+  
+      // Intenta leer JSON
+      let msg = '¡Enviado! Gracias 🫶';
+      try { const j = JSON.parse(text); if (j.ok) msg = '¡Guardado en la hoja! ✅'; } catch {}
+  
+      localStorage.removeItem(STORAGE_KEY);
+      status(msg, 'ok');
+      form.reset();
+      showStep(1);
+      window.scrollTo({top:0, behavior:'smooth'});
+    } catch (err) {
+      console.error('Fallo envío', err);
+      status('No se pudo enviar. Guarda y reintenta.', 'err');
+    }
+  });
 
-    localStorage.removeItem(STORAGE_KEY);
-    status(msg, 'ok');
-    form.reset();
-    showStep(1);
-    window.scrollTo({top:0, behavior:'smooth'});
-  }catch(err){
-    console.error(err);
-    status('No se pudo enviar. Guarda y reintenta.', 'err');
-  }
-});
+  
+
 
 // dentro de tu IIFE, sustituye el fetch del submit por esto:
       const res = await fetch(WEBHOOK_URL, {
