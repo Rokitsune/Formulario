@@ -4,6 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Planes Juntos</title>
+
+<!-- ADDED: manifest para PWA -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#1e3a8a" />
+
 <style>
   :root{
     --bg:#0f0f12; --card:#17171b; --ink:#f3f3f4; --muted:#a9a9b3;
@@ -355,6 +360,59 @@
   out.textContent = `${range.value} €`;
 })();
 </script>
+
+<!-- ADDED: registro del Service Worker (no interfiere con tu lógica) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+      // Si tu SW se llama distinto, ajusta la ruta arriba (p.ej. './service-worker.js')
+    });
+  }
+</script>
+
+<!-- ADDED: botón + lógica de instalación PWA -->
+<button id="installPWA"
+  hidden
+  style="
+    position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+    padding: 12px 16px; border: 0; border-radius: 999px;
+    background:#1e3a8a; color:#fff; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.25);
+    cursor: pointer;
+  ">
+  Instalar app
+</button>
+<script>
+  (function () {
+    const btn = document.getElementById('installPWA');
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btn.hidden = false;
+    });
+
+    btn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      btn.disabled = true;
+      try {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+      } finally {
+        deferredPrompt = null;
+        btn.hidden = true;
+        btn.disabled = false;
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      btn.hidden = true;
+    });
+  })();
+</script>
 </body>
 </html>
+
 
