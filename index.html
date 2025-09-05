@@ -326,10 +326,36 @@
   form.addEventListener('change', e => { if(e.target===range) out.textContent = `${range.value} €`; autosave(); });
 
   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = serialize();
-    status('Enviando…');
-    try{
+  e.preventDefault();
+  const data = serialize();
+  status('Enviando…');
+
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      // 👉 "Simple request" (sin preflight): así Apps Script lo acepta sin CORS
+      headers:{ 'Content-Type':'text/plain' },
+      body: JSON.stringify(data)
+    });
+
+    // Si Apps Script devuelve JSON, lo leemos (no siempre es necesario)
+    let msg = '¡Enviado! Gracias 🫶';
+    try {
+      const j = await res.json();
+      if (j && j.ok) msg = '¡Guardado en la hoja! ✅';
+    } catch(e){ /* si no hay JSON no pasa nada */ }
+
+    localStorage.removeItem(STORAGE_KEY);
+    status(msg, 'ok');
+    form.reset();
+    showStep(1);
+    window.scrollTo({top:0, behavior:'smooth'});
+  }catch(err){
+    console.error(err);
+    status('No se pudo enviar. Guarda y reintenta.', 'err');
+  }
+});
+
 // dentro de tu IIFE, sustituye el fetch del submit por esto:
       const res = await fetch(WEBHOOK_URL, {
         method:'POST',
