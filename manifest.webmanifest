@@ -1,7 +1,7 @@
 {
-  "name": "Plan de viaje de Denis",
+  "name": "Planes Juntos",
   "short_name": "Viaje Denis",
-  "description": "Formulario bonito para planificar viajes con Denis.",
+  "description": "Formulario bonito para planificar viajes.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0f0f12",
