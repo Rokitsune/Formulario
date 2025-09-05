@@ -95,21 +95,6 @@
   .footer{margin-top:12px;color:var(--muted);font-size:.9rem}
   .install-banner{display:none;margin:10px 0 0;align-items:center;gap:10px}
 
-  /* Splash screen */
-  .splash{
-    position:fixed; inset:0; z-index:9999;
-    background:linear-gradient(180deg,#000,#0f172a);
-    display:flex; align-items:center; justify-content:center; flex-direction:column;
-    color:white; font-size:1.4rem; font-weight:600;
-  }
-  .splash.fade-out{opacity:0;transition:opacity .6s ease;pointer-events:none}
-</style>
-</head>
-<body>
-<div class="splash" id="splash">
-  <div style="font-size:2.4rem;margin-bottom:10px;">🌌</div>
-  Cargando Viaje Denis...
-</div>
 
 <div class="wrap">
   <div class="card">
@@ -325,10 +310,6 @@
     }catch(err){console.error(err);status('No se pudo enviar','err');}
   });
 
-  // Splash
-  window.addEventListener('load',()=>{document.getElementById('splash').classList.add('fade-out');});
-  // SW
-  if('serviceWorker'in navigator){navigator.serviceWorker.register('./service-worker.js');}
   // Install banner
   let deferredPrompt=null;
   const banner=document.getElementById('installBanner');
