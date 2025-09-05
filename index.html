@@ -4,6 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Plan de viaje de Denis</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a5cff">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <style>
   :root{
     --bg:#0f0f12; --card:#17171b; --ink:#f3f3f4; --muted:#a9a9b3;
@@ -50,7 +56,11 @@
       <p class="muted">Ayúdame a prepararte un viaje perfecto. Solo tardas 2–3 min.</p>
 
       <div class="progress"><div class="bar" id="bar"></div></div>
-
+      <div class="install-banner" id="installBanner" style="display:none;margin:10px 0 0">
+        <span class="muted small">¿Quieres instalar la app?</span>
+        <button class="primary" id="installBtn">Instalar</button>
+        <button class="ghost" id="dismissBtn">Ahora no</button>
+      </div>
       <form id="tripForm" class="grid" autocomplete="on" novalidate>
         <!-- STEP 1 -->
         <div class="step active" data-step="1">
@@ -348,6 +358,31 @@
       status('No se pudo enviar. Intenta de nuevo más tarde.', 'err');
     }
   });
+  // --- PWA: registro SW + banner instalar ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js');
+  }
+  
+  let deferredPrompt = null;
+  const banner = document.getElementById('installBanner');
+  const btnInstall = document.getElementById('installBtn');
+  const btnDismiss = document.getElementById('dismissBtn');
+  
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    banner.style.display = 'flex';
+  });
+  btnInstall?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.style.display = 'none';
+  });
+  btnDismiss?.addEventListener('click', () => banner.style.display = 'none');
+  
+  // iPhone: instalación manual desde “Compartir → Añadir a pantalla de inicio”
 
   // init
   load();
