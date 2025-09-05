@@ -38,7 +38,7 @@
   .primary{background:linear-gradient(90deg,var(--brand),var(--brand-2)); color:white}
   .ghost{background:#22222a; color:var(--ink)}
   .ok{color:#0c2; font-weight:700}
-  .err{color:var(--err); font-weight:700}
+  .err{color:#ff6b6b; font-weight:700}
   .small{font-size:.92rem}
   .footer{margin-top:12px;color:var(--muted);font-size:.9rem}
 </style>
@@ -52,7 +52,7 @@
       <div class="progress"><div class="bar" id="bar"></div></div>
 
       <form id="tripForm" class="grid" autocomplete="on" novalidate>
-        <!-- STEP 1: Datos básicos -->
+        <!-- STEP 1 -->
         <div class="step active" data-step="1">
           <div class="grid two">
             <div>
@@ -89,7 +89,7 @@
           </div>
         </div>
 
-        <!-- STEP 2: Preferencias -->
+        <!-- STEP 2 -->
         <div class="step" data-step="2">
           <div>
             <label>Estilo de viaje</label>
@@ -152,7 +152,7 @@
           </div>
         </div>
 
-        <!-- STEP 3: Presupuesto y destinos -->
+        <!-- STEP 3 -->
         <div class="step" data-step="3">
           <div>
             <label for="presupuesto">Presupuesto total aprox. (€)</label>
@@ -180,7 +180,7 @@
           </div>
         </div>
 
-        <!-- STEP 4: Confirmación -->
+        <!-- STEP 4 -->
         <div class="step" data-step="4">
           <p>Revisa y envía. Tardaré nada en proponerte un planning ✨</p>
           <ul class="muted small" id="review"></ul>
@@ -215,7 +215,7 @@
   const range = document.getElementById('presupuesto');
   const out = document.getElementById('presOut');
   const STORAGE_KEY = 'form_denis_viaje_v1';
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyosUEVcTjEj7PiEBxqQte5Zr3D8xAyI9MLuggA_5D-PtD2_qlfZY8EqCCEBC4PV2kB9g/exec'; // <-- Paso 2
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyosUEVcTjEj7PiEBxqQte5Zr3D8xAyI9MLuggA_5D-PtD2_qlfZY8EqCCEBC4PV2kB9g/exec';
 
   let step = 1;
 
@@ -238,14 +238,12 @@
 
   const serialize = () => {
     const fd = new FormData(form);
-    // Para checkboxes múltiples
     const data = {};
     for (const [k,v] of fd.entries()){
       if (data[k]) {
         if (Array.isArray(data[k])) data[k].push(v); else data[k] = [data[k], v];
       } else data[k] = v;
     }
-    // Añade fecha/hora de envío local
     data._submitted_at = new Date().toISOString();
     return data;
   };
@@ -271,9 +269,7 @@
           });
         } else if (el.type === 'checkbox'){
           el.checked = !!v;
-        } else if (Array.isArray(v)){
-          // nada
-        } else {
+        } else if (!Array.isArray(v)){
           el.value = v;
         }
       }
@@ -283,15 +279,9 @@
   };
 
   const validateStep = () => {
-    if (step===1){
-      const nombre = form.nombre.value.trim();
-      if (!nombre){ status('Pon tu nombre, porfa.', 'err'); return false; }
-    }
-    if (step===3){
-      if (range.value < 100){ status('Presupuesto mínimo 100 €.', 'err'); return false; }
-    }
-    status('');
-    return true;
+    if (step===1 && !form.nombre.value.trim()){ status('Pon tu nombre, porfa.', 'err'); return false; }
+    if (step===3 && range.value < 100){ status('Presupuesto mínimo 100 €.', 'err'); return false; }
+    status(''); return true;
   };
 
   const buildReview = () => {
@@ -315,68 +305,30 @@
     reviewEl.innerHTML = entries.map(([k,v]) => `<li><strong>${k}:</strong> <span class="muted">${v}</span></li>`).join('');
   };
 
-  // Eventos
-  next.addEventListener('click', () => {
-    if (!validateStep()) return;
-    showStep(step+1);
-  });
+  // Eventos UI
+  next.addEventListener('click', () => { if (!validateStep()) return; showStep(step+1); });
   prev.addEventListener('click', () => showStep(step-1));
   save.addEventListener('click', autosave);
   form.addEventListener('input', e => { if(e.target===range) out.textContent = `${range.value} €`; });
   form.addEventListener('change', e => { if(e.target===range) out.textContent = `${range.value} €`; autosave(); });
 
+  // Envío a Google Apps Script (urlencoded → sin preflight)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = serialize();
     status('Enviando…');
-  
     try {
-      // Enviamos como application/x-www-form-urlencoded (simple request)
       const body = new URLSearchParams({ payload: JSON.stringify(data) });
-  
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        body // no pongas headers manuales; el navegador ya fija el correcto
-      });
-  
-      const text = await res.text(); // por si tu script devuelve JSON o texto
+      const res = await fetch(WEBHOOK_URL, { method:'POST', body });
+      const text = await res.text();
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-  
-      // Intenta leer JSON
       let msg = '¡Enviado! Gracias 🫶';
       try { const j = JSON.parse(text); if (j.ok) msg = '¡Guardado en la hoja! ✅'; } catch {}
-  
       localStorage.removeItem(STORAGE_KEY);
       status(msg, 'ok');
-      form.reset();
-      showStep(1);
-      window.scrollTo({top:0, behavior:'smooth'});
+      form.reset(); showStep(1); window.scrollTo({top:0, behavior:'smooth'});
     } catch (err) {
       console.error('Fallo envío', err);
-      status('No se pudo enviar. Guarda y reintenta.', 'err');
-    }
-  });
-
-  
-
-
-// dentro de tu IIFE, sustituye el fetch del submit por esto:
-      const res = await fetch(WEBHOOK_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status} - ${txt}`);
-      }
-      localStorage.removeItem(STORAGE_KEY);
-      status('¡Enviado! Gracias 🫶', 'ok');
-      form.reset();
-      showStep(1);
-      window.scrollTo({top:0, behavior:'smooth'});
-    }catch(err){
-      console.error(err);
       status('No se pudo enviar. Guarda y reintenta.', 'err');
     }
   });
@@ -389,3 +341,4 @@
 </script>
 </body>
 </html>
+
