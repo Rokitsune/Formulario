@@ -330,12 +330,16 @@
     const data = serialize();
     status('Enviando…');
     try{
+// dentro de tu IIFE, sustituye el fetch del submit por esto:
       const res = await fetch(WEBHOOK_URL, {
         method:'POST',
-        mode:'no-cors', // Apps Script admite no-cors; en caso de CORS estricto, quitarlo y ajustar en el script
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(data)
       });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status} - ${txt}`);
+      }
       localStorage.removeItem(STORAGE_KEY);
       status('¡Enviado! Gracias 🫶', 'ok');
       form.reset();
