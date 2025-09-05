@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Viajes juntitos — by Ro</title>
+<title>Planes Juntos — by Ro</title>
 
 <!-- PWA meta -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -100,7 +100,7 @@
     position:fixed; inset:0; z-index:9999;
     background:linear-gradient(180deg,#000,#0f172a);
     display:flex; align-items:center; justify-content:center; flex-direction:column;
-    color:white; font-size:1.4rem; font-weight:600;
+    color:white; font-size:1.2rem; font-weight:600; text-align:center; padding:20px;
   }
   .splash.fade-out{opacity:0;transition:opacity .6s ease;pointer-events:none}
 </style>
@@ -109,27 +109,27 @@
 <!-- Splash -->
 <div class="splash" id="splash">
   <div style="font-size:2.4rem;margin-bottom:10px;">🌌</div>
-  Cargando planes para mi amorrr...
+  cargando planes para mi amorrr
 </div>
 
 <div class="wrap">
   <div class="card">
-    <h1>Formulario de viaje ✈</h1>
-    <p class="subtitle">Ayúdame a preparar el viaje perfecto 💙⚫</p>
+    <h1>Formulario de viaje ✈️</h1>
+    <p class="subtitle">Ayudame a planificar el viaje perfectooo</p>
 
     <div class="progress"><div class="bar" id="bar"></div></div>
 
     <form id="tripForm" class="grid" autocomplete="on" novalidate>
-      <!-- PASO 1: Datos -->
+      <!-- PASO 1 -->
       <div class="step active" data-step="1">
         <div class="grid two">
           <div>
             <label for="nombre">Tu nombre</label>
-            <input id="nombre" name="nombre" type="text" placeholder="Nombre" required />
+            <input id="nombre" name="nombre" type="text" placeholder="Denis" required />
           </div>
           <div>
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="tuemail@ejemplo.com" />
+            <input id="email" name="email" type="email" placeholder="denis@ejemplo.com" />
           </div>
         </div>
 
@@ -157,7 +157,7 @@
         </div>
       </div>
 
-      <!-- PASO 2: Preferencias -->
+      <!-- PASO 2 -->
       <div class="step" data-step="2">
         <div>
           <label>Estilo de viaje</label>
@@ -220,7 +220,7 @@
         </div>
       </div>
 
-      <!-- PASO 3: Presupuesto y destinos -->
+      <!-- PASO 3 -->
       <div class="step" data-step="3">
         <div>
           <label for="presupuesto">Presupuesto total aprox. (€)</label>
@@ -248,7 +248,7 @@
         </div>
       </div>
 
-      <!-- PASO 4: Confirmación -->
+      <!-- PASO 4 -->
       <div class="step" data-step="4">
         <p>Revisa y envía 💌</p>
         <ul class="muted small" id="review"></ul>
@@ -303,7 +303,7 @@
     next.style.display = step < steps.length ? '' : 'none';
     submitBtn.style.display = step === steps.length ? '' : 'none';
     status('');
-    if (step === steps.length) buildReview();
+    if(step===steps.length) buildReview();
   };
 
   const status = (msg, type='') => {
@@ -316,8 +316,7 @@
     const data = {};
     for (const [k,v] of fd.entries()){
       if (data[k]) {
-        if (Array.isArray(data[k])) data[k].push(v);
-        else data[k] = [data[k], v];
+        if (Array.isArray(data[k])) data[k].push(v); else data[k] = [data[k], v];
       } else data[k] = v;
     }
     data._submitted_at = new Date().toISOString();
@@ -331,14 +330,14 @@
 
   const load = () => {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+    if(!raw) return;
     try{
       const data = JSON.parse(raw);
       for (const [k,v] of Object.entries(data)){
         const el = form.elements[k];
-        if (!el) continue;
+        if(!el) continue;
         if (el instanceof RadioNodeList){
-          [...form.querySelectorAll([name="${k}"])].forEach(inp=>{
+          [...form.querySelectorAll(`[name="${k}"]`)].forEach(inp=>{
             if (Array.isArray(v)) inp.checked = v.includes(inp.value);
             else inp.checked = (inp.value === v);
           });
@@ -348,14 +347,17 @@
           el.value = v;
         }
       }
-      if (data.presupuesto) { range.value = data.presupuesto; out.textContent = ${data.presupuesto} €; }
-      status('Borrador cargado', 'small');
+      if (data.presupuesto && range) {
+        range.value = data.presupuesto;
+        if (out) out.textContent = `${data.presupuesto} €`;
+      }
+      status('Borrador cargado','small');
     }catch(e){}
   };
 
   const validateStep = () => {
-    if (step === 1 && !form.nombre.value.trim()){ status('Pon tu nombre, porfa.', 'err'); return false; }
-    if (step === 3 && range.value < 100){ status('Presupuesto mínimo 100 €.', 'err'); return false; }
+    if (step===1 && !form.nombre.value.trim()){ status('Pon tu nombre, porfa.', 'err'); return false; }
+    if (step===3 && range && range.value < 100){ status('Presupuesto mínimo 100 €.', 'err'); return false; }
     status(''); return true;
   };
 
@@ -364,7 +366,7 @@
     const entries = [
       ['Nombre', data.nombre || '—'],
       ['Email', data.email || '—'],
-      ['Fechas', ${data.desde||'—'} → ${data.hasta||'—'}],
+      ['Fechas', `${data.desde||'—'} → ${data.hasta||'—'}`],
       ['Tipos de destino', (data.destinos_tipo? [].concat(data.destinos_tipo).join(', ') : '—')],
       ['Estilo', data.estilo || '—'],
       ['Alojamiento', data.alojamiento || '—'],
@@ -377,21 +379,15 @@
       ['Evitar', data.evitar || '—'],
       ['Notas', data.notas || '—'],
     ];
-    reviewEl.innerHTML = entries.map(([k,v]) => <li><strong>${k}:</strong> <span class="muted">${v}</span></li>).join('');
+    reviewEl.innerHTML = entries.map(([k,v]) => `<li><strong>${k}:</strong> <span class="muted">${v}</span></li>`).join('');
   };
 
   // Navegación
   next.addEventListener('click', () => { if (!validateStep()) return; showStep(step+1); });
   prev.addEventListener('click', () => showStep(step-1));
   save.addEventListener('click', autosave);
-
-  form.addEventListener('input', e => {
-    if (e.target === range) out.textContent = ${range.value} €;
-  });
-  form.addEventListener('change', e => {
-    if (e.target === range) out.textContent = ${range.value} €;
-    autosave();
-  });
+  form.addEventListener('input', e => { if(e.target===range && out) out.textContent = `${range.value} €`; });
+  form.addEventListener('change', e => { if(e.target===range && out) out.textContent = `${range.value} €`; autosave(); });
 
   // Envío a email (FormSubmit)
   form.addEventListener('submit', async (e) => {
@@ -399,7 +395,7 @@
     const data = serialize();
     status('Enviando…');
     const payload = {
-      _subject: Nueva respuesta: ${data.nombre || 'Sin nombre'} — Viaje Denis,
+      _subject: `Nueva respuesta: ${data.nombre || 'Sin nombre'} — Planes Juntos`,
       _template: "table",
       _replyto: data.email || "",
       ...data
@@ -420,31 +416,30 @@
     }
   });
 
-  // Splash
-  window.addEventListener('load', ()=> {
-    document.getElementById('splash').classList.add('fade-out');
-  });
+  // --- Splash seguro ---
+  const hideSplash = () => {
+    const s = document.getElementById('splash');
+    if (s && !s.classList.contains('fade-out')) s.classList.add('fade-out');
+  };
+  // Oculta al tener DOM listo (fallback rápido)
+  document.addEventListener('DOMContentLoaded', () => setTimeout(hideSplash, 300));
+  // Y también al final de carga de recursos
+  window.addEventListener('load', hideSplash);
+  // Fallback por si algo impide los eventos (3s)
+  setTimeout(hideSplash, 3000);
 
-  // PWA: registrar SW + instalar
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js');
-  }
-  let deferredPrompt = null;
-  const banner = document.getElementById('installBanner');
-  const btnInstall = document.getElementById('installBtn');
-  const btnDismiss = document.getElementById('dismissBtn');
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferredPrompt = e; banner.style.display = 'flex';
-  });
-  btnInstall?.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt(); await deferredPrompt.userChoice;
-    deferredPrompt = null; banner.style.display = 'none';
-  });
-  btnDismiss?.addEventListener('click', () => banner.style.display = 'none');
+  // PWA: SW + instalar
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }
+  let deferredPrompt=null;
+  const banner=document.getElementById('installBanner');
+  const btnInstall=document.getElementById('installBtn');
+  const btnDismiss=document.getElementById('dismissBtn');
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e; if(banner) banner.style.display='flex';});
+  btnInstall?.addEventListener('click',async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(banner) banner.style.display='none'; });
+  btnDismiss?.addEventListener('click',()=>{ if(banner) banner.style.display='none'; });
 
   // init
-  load(); showStep(1); out.textContent = ${range.value} €;
+  load(); showStep(1); if (range && out) out.textContent = `${range.value} €`;
 })();
 </script>
 </body>
