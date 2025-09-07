@@ -46,12 +46,35 @@
   .err{color:#ff6b6b; font-weight:700}
   .small{font-size:.92rem}
   .footer{margin-top:12px;color:var(--muted);font-size:.9rem}
+  .countdowns{
+  display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 12px
+}
+.cd-pill{
+  display:flex; align-items:center; gap:8px;
+  background:#121217; border:1px solid #2b2b33; color:var(--ink);
+  padding:8px 12px; border-radius:999px; font-size:.95rem
+}
+.cd-pill strong{ font-weight:800 }
+.cd-soon { border-color: var(--warn) }
+.cd-today { border-color: var(--ok) }
+.cd-past { opacity:.85; color:var(--muted) }
+
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>Formulario de viaje ✈️</h1>
+      <div id="countdowns" class="countdowns">
+  <div class="cd-pill">
+    <strong>Próximo encuentro</strong>
+    <span id="cd-proxima"></span>
+  </div>
+  <div class="cd-pill">
+    <strong>Aniversario</strong>
+    <span id="cd-aniversario"></span>
+  </div>
+</div>
       <p class="muted">Ayúdame a prepararte un viaje perfecto. Solo tardas 2–3 min.</p>
 
       <div class="progress"><div class="bar" id="bar"></div></div>
@@ -412,6 +435,105 @@
     });
   })();
 </script>
+<script>
+/**
+ * Cuenta atrás doble: “Próximo encuentro” y “Aniversario”.
+ * - Formato fechas: 'YYYY-MM-DD' o 'DD/MM/YYYY' (se detecta).
+ * - Actualiza cada segundo.
+ * - Muestra días + hh:mm:ss; cuando llega el día: “¡Hoy!”.
+ * - Si pasó: “Hace X días” y estilo atenuado.
+ */
+(function(){
+  // ⚙️ Configura aquí tus fechas
+  const FECHAS = {
+    proxima: '20/09/2025',
+    aniversario: '27/08/2025'
+  };
+
+  // Helpers
+  const $ = s => document.querySelector(s);
+  const parseDate = (str) => {
+    // Admite 'DD/MM/YYYY' o 'YYYY-MM-DD'
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)){
+      const [d,m,y] = str.split('/').map(Number);
+      return new Date(y, m-1, d, 0, 0, 0);
+    }
+    return new Date(str);
+  };
+  const pad = n => String(n).padStart(2,'0');
+
+  const fmt = (ms) => {
+    const total = Math.floor(ms/1000);
+    const d = Math.floor(total/86400);
+    const h = Math.floor((total%86400)/3600);
+    const m = Math.floor((total%3600)/60);
+    const s = total%60;
+    // “1 día” vs “2 días”
+    const dLabel = d === 1 ? 'día' : 'días';
+    return d > 0
+      ? `${d} ${dLabel} ${pad(h)}:${pad(m)}:${pad(s)}`
+      : `${pad(h)}:${pad(m)}:${pad(s)}`;
+  };
+
+  const proximaEl = $('#cd-proxima');
+  const anivEl = $('#cd-aniversario');
+  const proximaPill = proximaEl?.closest('.cd-pill');
+  const anivPill = anivEl?.closest('.cd-pill');
+
+  const dProx = parseDate(FECHAS.proxima);
+  const dAniv = parseDate(FECHAS.aniversario);
+
+  function tick(){
+    const now = new Date();
+
+    // Próximo encuentro
+    if (proximaEl){
+      const diff = dProx - now;
+      proximaPill.classList.remove('cd-soon','cd-today','cd-past');
+      if (diff > 0){
+        proximaEl.textContent = 'Faltan ' + fmt(diff);
+        // Marca visual si quedan < 5 días
+        if (diff < 5*24*3600*1000) proximaPill.classList.add('cd-soon');
+      } else {
+        // mismo día?
+        const sameDay = now.toDateString() === dProx.toDateString();
+        if (sameDay){
+          proximaEl.textContent = '¡Hoy!';
+          proximaPill.classList.add('cd-today');
+        } else {
+          const daysAgo = Math.ceil((now - dProx)/86400000);
+          proximaEl.textContent = `Hace ${daysAgo} ${daysAgo===1?'día':'días'}`;
+          proximaPill.classList.add('cd-past');
+        }
+      }
+    }
+
+    // Aniversario
+    if (anivEl){
+      const diffA = dAniv - now;
+      anivPill.classList.remove('cd-soon','cd-today','cd-past');
+      if (diffA > 0){
+        anivEl.textContent = 'Faltan ' + fmt(diffA);
+        if (diffA < 5*24*3600*1000) anivPill.classList.add('cd-soon');
+      } else {
+        const sameDayA = now.toDateString() === dAniv.toDateString();
+        if (sameDayA){
+          anivEl.textContent = '¡Hoy!';
+          anivPill.classList.add('cd-today');
+        } else {
+          const daysAgoA = Math.ceil((now - dAniv)/86400000);
+          anivEl.textContent = `Hace ${daysAgoA} ${daysAgoA===1?'día':'días'}`;
+          anivPill.classList.add('cd-past');
+        }
+      }
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+
 </body>
 </html>
 
