@@ -572,6 +572,29 @@
   new MutationObserver(showFocus).observe(document.querySelector('.card'), {subtree:true, attributes:true, attributeFilter:['class']});
 })();
 </script>
+<script>
+function confettiBurst(){
+  for(let i=0; i<50; i++){
+    const c = document.createElement('div');
+    c.textContent = '💜';
+    c.style.position='fixed';
+    c.style.left = Math.random()*100+'vw';
+    c.style.top = '-2vh';
+    c.style.fontSize = (Math.random()*20+16)+'px';
+    c.style.animation = `fall ${2+Math.random()*3}s linear`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+document.getElementById('tripForm').addEventListener('submit', e=>{
+  setTimeout(confettiBurst,500); // tras enviar
+});
+</script>
+<style>
+@keyframes fall {
+  to{ transform:translateY(110vh) rotate(360deg); opacity:0; }
+}
+</style>
 
   
 </body>
