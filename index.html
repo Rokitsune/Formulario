@@ -533,7 +533,47 @@
   setInterval(tick, 1000);
 })();
 </script>
+<script>
+(function(){
+  const f = document.getElementById('tripForm');
+  const err = (el,msg)=>{ el.setCustomValidity(msg); el.reportValidity(); };
+  const ok  = (el)=> el.setCustomValidity('');
 
+  f.desde.addEventListener('change', ()=> ok(f.hasta));
+  f.hasta.addEventListener('change', ()=>{
+    const d1 = f.desde.value && new Date(f.desde.value);
+    const d2 = f.hasta.value && new Date(f.hasta.value);
+    if (d1 && d2 && d2 < d1) err(f.hasta,'La fecha “hasta” no puede ser anterior a “desde”.');
+    else ok(f.hasta);
+  });
+
+  f.nombre.addEventListener('input', ()=>{
+    if (f.nombre.value.trim().length < 2) err(f.nombre,'Pon al menos 2 letras, porfa.');
+    else ok(f.nombre);
+  });
+})();
+</script>
+<script>
+(function(){
+  const form = document.getElementById('tripForm');
+  const steps = [...document.querySelectorAll('.step')];
+  const next  = document.getElementById('next');
+  form.addEventListener('keydown', e=>{
+    if (e.key === 'Enter' && !e.target.matches('textarea, [type=submit]')) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // En cada paso, coloca foco en el primer input visible
+  const showFocus = () => {
+    const active = document.querySelector('.step.active');
+    const first = active?.querySelector('input,select,textarea,button');
+    first?.focus();
+  };
+  new MutationObserver(showFocus).observe(document.querySelector('.card'), {subtree:true, attributes:true, attributeFilter:['class']});
+})();
+</script>
+
+  
 </body>
 </html>
 
