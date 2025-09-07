@@ -572,29 +572,52 @@
   new MutationObserver(showFocus).observe(document.querySelector('.card'), {subtree:true, attributes:true, attributeFilter:['class']});
 })();
 </script>
-<script>
-function confettiBurst(){
-  for(let i=0; i<50; i++){
-    const c = document.createElement('div');
-    c.textContent = '💜';
-    c.style.position='fixed';
-    c.style.left = Math.random()*100+'vw';
-    c.style.top = '-2vh';
-    c.style.fontSize = (Math.random()*20+16)+'px';
-    c.style.animation = `fall ${2+Math.random()*3}s linear`;
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),5000);
-  }
-}
-document.getElementById('tripForm').addEventListener('submit', e=>{
-  setTimeout(confettiBurst,500); // tras enviar
-});
-</script>
 <style>
 @keyframes fall {
-  to{ transform:translateY(110vh) rotate(360deg); opacity:0; }
+  to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+/* capa encima de todo, sin bloquear clics */
+.confetti {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 0;
+  z-index: 10000; pointer-events: none;
 }
 </style>
+
+<script>
+(function(){
+  // 1) Crea un contenedor para no ensuciar <body>
+  const layer = document.createElement('div');
+  layer.className = 'confetti';
+  document.body.appendChild(layer);
+
+  // 2) Función de confeti
+  function confettiBurst(n = 80) {
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('div');
+      el.textContent = Math.random() < .5 ? '💜' : '✨';
+      el.style.position = 'fixed';
+      el.style.left = (Math.random() * 100) + 'vw';
+      el.style.top = '-2vh';
+      el.style.fontSize = (16 + Math.random()*24) + 'px';
+      el.style.animation = `fall ${2 + Math.random()*3}s linear`;
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+      layer.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+
+  // 3) Engánchate a TU envío existente (no toques tu lógica)
+  const form = document.getElementById('tripForm');
+  form.addEventListener('submit', () => {
+    // dispara después de que tu fetch empiece
+    setTimeout(confettiBurst, 300);
+  });
+
+  // 4) Botoncito de prueba (opcional, bórralo si quieres)
+  //   -> te ayuda a comprobar que se ve sin tener que enviar
+  window.confettiTest = () => confettiBurst(40);
+})();
+</script>
 
   
 </body>
